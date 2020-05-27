@@ -9,13 +9,16 @@ public class PickerController : MonoBehaviour
     [SerializeField] private float forwardSpeed = 10f;
     [SerializeField] private float sidewaySpeed = 1f;
 
-    private bool waitForCheckpoint;
     private Collider[] _colliders;
+    private Rigidbody _rigidbody;
+    
+    public bool WaitForCheckpoint { get; set; }
     
     // Start is called before the first frame update
     void Start()
     {
-        waitForCheckpoint = false;
+        WaitForCheckpoint = false;
+        _rigidbody = GetComponent<Rigidbody>();
     }
 
     // Update is called once per frame
@@ -26,34 +29,55 @@ public class PickerController : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (!waitForCheckpoint)
+        if (!WaitForCheckpoint)
         {
-            transform.position += new Vector3(Input.GetAxis("Horizontal"), 0f, 0f) * sidewaySpeed;
-            GetComponent<Rigidbody>().velocity = new Vector3(0f, 0f, 1f) * forwardSpeed;
+            Move();   
         }
         else
         {
-            GetComponent<Rigidbody>().velocity = Vector3.zero;
+            _rigidbody.velocity = Vector3.zero;
+            PushCollectiblesInPicker(FindCollectiblesInPicker());
+        }
+    }
 
-            _colliders = Physics.OverlapBox(transform.position + GetComponent<BoxCollider>().center, GetComponent<BoxCollider>().size / 2);
+    private void Move()
+    {
+        transform.position += new Vector3(Input.GetAxis("Horizontal"), 0f, 0f) * sidewaySpeed;
+        _rigidbody.velocity = new Vector3(0f, 0f, 1f) * forwardSpeed;
+    }
+
+    private List<Collider> FindCollectiblesInPicker()
+    {
+        List<Collider> collectibles = new List<Collider>();
+
+        _colliders = Physics.OverlapBox(transform.position + GetComponent<BoxCollider>().center, GetComponent<BoxCollider>().size / 2);
             
-            int count = 0;
-            for (int i = 0; i < _colliders.Length; i++)
+        foreach (var coll in _colliders)
+        {
+            if (coll.CompareTag("Collectible"))
             {
-            
-                if (_colliders[i].CompareTag("Collectible"))
-                {
-                    _colliders[i].GetComponent<Rigidbody>().AddForce(Vector3.forward * 5f);
-                }
+                collectibles.Add(coll);
             }
+        }
+
+        return collectibles;
+    }
+
+    private void PushCollectiblesInPicker(List<Collider> collectibles)
+    {
+        foreach (var collectible in collectibles)
+        {
+            collectible.GetComponent<Rigidbody>().AddForce(Vector3.forward * 5f);
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
+        /*
         if (other.CompareTag("CollectBox"))
         {
-            waitForCheckpoint = true;
+            WaitForCheckpoint = true;
         }
+        */
     }
 }
