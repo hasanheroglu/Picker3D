@@ -5,15 +5,13 @@ using UnityEngine;
 public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
-    
-    [SerializeField] private List<GameObject> paths;
-    [SerializeField] private int pathCount;
+    public int LevelIndex { get; set; }
 
+    
+    [SerializeField] private List<GameObject> levels;
     [SerializeField] private GameObject picker;
     
-    private List<CollectBox> collectBoxes;
-    private int checkpointIndex;
-    private int levelIndex;
+    private GameObject _currentLevel;
     
     // Start is called before the first frame update
     void Start()
@@ -27,27 +25,35 @@ public class LevelManager : MonoBehaviour
             Destroy(Instance);
         }
         
-        pathCount = 3;
-        checkpointIndex = 1;
-        levelIndex = 1;
-        collectBoxes = new List<CollectBox>();
-        
+        LevelIndex = 0;
+        GenerateLevel();
+    }
+    
+    public void SetLevel()
+    {
+        UIManager.Instance.SetLevelTexts(LevelIndex);        
+        UIManager.Instance.ClearWorldSpaceCanvas();
+        UIManager.Instance.ResetCheckpointIndicators();
+        ClearLevel();
+        MovePickerToStartPosition();
         GenerateLevel();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void MovePickerToStartPosition()
     {
-        
-    }
+        picker.transform.position = new Vector3(picker.transform.position.x, picker.transform.position.y, -75f);
 
+    }
+    
     private void GenerateLevel()
     {
-        for (int i = 0; i < pathCount; i++)
-        {
-            var selectedPathPrefab = paths[Random.Range(0, paths.Count)];
-            var path = Instantiate(selectedPathPrefab, selectedPathPrefab.transform.position + new Vector3(0f, 0f, selectedPathPrefab.transform.position.z) * i, selectedPathPrefab.transform.rotation);
-            path.GetComponentInChildren<CollectBox>().SetNeededCollectibleCount(10 * (i + 1) + 10 * (levelIndex / 10));
-        }
+        if (LevelIndex >= levels.Count) return; 
+        
+        _currentLevel = Instantiate(levels[LevelIndex], levels[LevelIndex].transform.position, levels[LevelIndex].transform.rotation);
+    }
+
+    private void ClearLevel()
+    {
+        Destroy(_currentLevel);
     }
 }

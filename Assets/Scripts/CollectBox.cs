@@ -1,20 +1,27 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 public class CollectBox : MonoBehaviour
 {
     [SerializeField] private GameObject path;
-    [SerializeField] private GameObject collectibleHolder; 
+    [SerializeField] private GameObject collectibleHolder;
+    [SerializeField] private GameObject checkpointLeftDoor;
+    [SerializeField] private GameObject checkpointRightDoor;
     
     private int _neededCollectibleCount;
     private int _collectibleCount;
+    private GameObject _collectBoxText;
     
     // Start is called before the first frame update
     void Start()
     {
         _collectibleCount = 0;
+        _collectBoxText = UIManager.Instance.GenerateCollectBoxText(transform.position.z);
+        _collectBoxText.GetComponent<TextMeshProUGUI>().text = _collectibleCount + "/" + _neededCollectibleCount;
     }
 
     // Update is called once per frame
@@ -27,9 +34,8 @@ public class CollectBox : MonoBehaviour
         if (other.CompareTag("Collectible"))
         {
             _collectibleCount++;
+            _collectBoxText.GetComponent<TextMeshProUGUI>().text = _collectibleCount + "/" + _neededCollectibleCount;
         }
-        
-        Debug.Log("Collectibles collected: " + _collectibleCount);
         
         if (other.CompareTag("Picker"))
         {
@@ -48,6 +54,8 @@ public class CollectBox : MonoBehaviour
         if (DidReachNeededCollectibleCount())
         {        
             yield return GeneratePath();
+            yield return OpenDoors();
+            UIManager.Instance.SetCheckpointIndicator();
             collectibleHolder.SetActive(false);
             pickerController.WaitForCheckpoint = false;
         }
@@ -59,7 +67,6 @@ public class CollectBox : MonoBehaviour
 
     public bool DidReachNeededCollectibleCount()
     {
-        Debug.Log("Checkpoint: " + _collectibleCount + "/" + _neededCollectibleCount);
         return _collectibleCount > _neededCollectibleCount;
     }
 
@@ -71,7 +78,7 @@ public class CollectBox : MonoBehaviour
     public IEnumerator GeneratePath()
     {
         var startTime = Time.time;
-        var duration = 0.1f;
+        var duration = 0.3f;
         while (Time.time < startTime + duration)
         {
             path.transform.localScale = Vector3.Lerp(new Vector3(0f, 0f, 0f), new Vector3(25f, 1f, 25f), (Time.time - startTime)/duration);
@@ -79,5 +86,21 @@ public class CollectBox : MonoBehaviour
         }
         
         path.transform.localScale = new Vector3(25f, 1f, 25f);
+    }
+
+    public IEnumerator OpenDoors()
+    {
+        var startTime = Time.time;
+        var duration = 0.3f;
+        while (Time.time < startTime + duration)
+        {
+            checkpointLeftDoor.transform.rotation = Quaternion.Lerp(Quaternion.identity, new Quaternion(0f, 0f, 0.5f, 1f), (Time.time - startTime)/duration);
+            checkpointRightDoor.transform.rotation = Quaternion.Lerp(Quaternion.identity, new Quaternion(0f, 0f, -0.5f, 1f), (Time.time - startTime)/duration);
+            
+            yield return null;
+        }
+
+        checkpointLeftDoor.transform.rotation = new Quaternion(0f, 0f, 0.5f, 1f);
+        checkpointRightDoor.transform.rotation = new Quaternion(0f, 0f, -0.5f, 1f);
     }
 }

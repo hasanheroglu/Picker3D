@@ -11,29 +11,43 @@ public class PickerController : MonoBehaviour
 
     private Collider[] _colliders;
     private Rigidbody _rigidbody;
+    private bool _started;
+    private bool _enteredFinish;
     
     public bool WaitForCheckpoint { get; set; }
-    
+    public bool WaitForNewLevel { get; set; }
+
     // Start is called before the first frame update
     void Start()
     {
         WaitForCheckpoint = false;
+        WaitForNewLevel = false;
         _rigidbody = GetComponent<Rigidbody>();
+        _enteredFinish = false;
+        _started = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if (!_started)
+        {
+            if (Input.GetAxis("Horizontal") != 0)
+            {
+                _started = true;
+                UIManager.Instance.RemoveInstructionMessage();
+            }
+        }
     }
 
     private void LateUpdate()
     {
-        if (!WaitForCheckpoint)
+        if (!WaitForCheckpoint && _started)
         {
             Move();   
         }
-        else
+        
+        if(WaitForCheckpoint)
         {
             _rigidbody.velocity = Vector3.zero;
             PushCollectiblesInPicker(FindCollectiblesInPicker());
@@ -67,17 +81,26 @@ public class PickerController : MonoBehaviour
     {
         foreach (var collectible in collectibles)
         {
-            collectible.GetComponent<Rigidbody>().AddForce(Vector3.forward * 5f);
+            collectible.GetComponent<Rigidbody>().AddForce(Vector3.forward * 50f);
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        /*
-        if (other.CompareTag("CollectBox"))
+        if (other.CompareTag("Start") && _enteredFinish)
         {
-            WaitForCheckpoint = true;
+            _enteredFinish = false;
+            _started = false;
+            _rigidbody.velocity = Vector3.zero;
+            UIManager.Instance.DisplayInstructionMessage();
         }
-        */
+        
+        if (other.CompareTag("Finish") && !_enteredFinish)
+        {
+            LevelManager.Instance.LevelIndex++;
+            LevelManager.Instance.SetLevel();
+            WaitForNewLevel = true;
+            _enteredFinish = true;
+        }
     }
 }
