@@ -4,15 +4,19 @@ using System.Collections.Generic;
 using UnityEditor.UIElements;
 using UnityEngine;
 
+
 public class PickerController : MonoBehaviour
 {
-    [SerializeField] private float forwardSpeed = 10f;
-    [SerializeField] private float sidewaySpeed = 1f;
-
+    [SerializeField] private float forwardSpeed = 20f;
+    [SerializeField] private float sidewaySpeed = 0.1f;
+    [SerializeField] private float collectiblePushSpeed = 50f;
+    
     private Collider[] _colliders;
     private Rigidbody _rigidbody;
     private bool _started;
     private bool _enteredFinish;
+    private float _maxSidewayPosition = 8.5f;
+    private float _minSidewayPosition = -8.5f;
     
     public bool WaitForCheckpoint { get; set; }
     public bool WaitForNewLevel { get; set; }
@@ -57,7 +61,17 @@ public class PickerController : MonoBehaviour
     private void Move()
     {
         transform.position += new Vector3(Input.GetAxis("Horizontal"), 0f, 0f) * sidewaySpeed;
-        _rigidbody.velocity = new Vector3(0f, 0f, 1f) * forwardSpeed;
+        
+        if(transform.position.x > _maxSidewayPosition)
+        {
+            transform.position = new Vector3(_maxSidewayPosition, transform.position.y, transform.position.z);
+        }
+        else if(transform.position.x < _minSidewayPosition)
+        {
+            transform.position = new Vector3(_minSidewayPosition, transform.position.y, transform.position.z);
+        }
+        
+        _rigidbody.velocity = Vector3.forward * forwardSpeed;
     }
 
     private List<Collider> FindCollectiblesInPicker()
@@ -81,7 +95,7 @@ public class PickerController : MonoBehaviour
     {
         foreach (var collectible in collectibles)
         {
-            collectible.GetComponent<Rigidbody>().AddForce(Vector3.forward * 50f);
+            collectible.GetComponent<Rigidbody>().AddForce(Vector3.forward * collectiblePushSpeed);
         }
     }
 

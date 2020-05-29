@@ -61,7 +61,8 @@ public class CollectBox : MonoBehaviour
         }
         else
         {
-            //Restart Level
+            LevelManager.Instance.SetLevel();
+            pickerController.WaitForCheckpoint = false;
         }
     }
 
